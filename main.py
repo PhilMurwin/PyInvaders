@@ -1,13 +1,17 @@
 import pygame, sys
+from player import Player
 
 class Game:
     def __init__(self):
-        pass
+        player_speed = 5
+        player_sprite = Player((screen_width / 2,screen_height), screen_width, player_speed)
+        self.player = pygame.sprite.GroupSingle(player_sprite)
     
     def run(self):
-        pass
         # update all sprite groups
+        self.player.update()
         # draw all sprite groups
+        self.player.draw(screen)
     
 if __name__ == '__main__':
     pygame.init()
