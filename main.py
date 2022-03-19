@@ -38,6 +38,15 @@ class Game:
         # Extra Alien setup
         self.extra = pygame.sprite.GroupSingle()
         self.extra_spawn_time = randint(40,80)
+
+        # Audio
+        self.music = pygame.mixer.Sound('audio/music.wav')
+        self.music.set_volume(0.15)
+        self.music.play(loops = -1)
+        self.laser_sound = pygame.mixer.Sound('audio/laser.wav')
+        self.laser_sound.set_volume(0.3)
+        self.explosion_sound = pygame.mixer.Sound('audio/explosion.wav')
+        self.explosion_sound.set_volume(0.3)
     
     def create_obstacle(self, x_start, y_start,offset_x):
         for row_index, row in enumerate(self.shape):
@@ -81,10 +90,11 @@ class Game:
                 alien.rect.y += distance
 
     def alien_shoot(self):
-        if self.aliens.sprites():
+        if self.aliens.sprites() and self.lives > 0:
             random_alien = choice(self.aliens.sprites())
             laser_sprite = Laser(random_alien.rect.center,6,screen_height)
             self.alien_lasers.add(laser_sprite)
+            self.laser_sound.play()
 
     def extra_alien_timer(self):
         self.extra_spawn_time -= 1
@@ -106,11 +116,13 @@ class Game:
                     for alien in aliens_hit:
                         self.score += alien.value
                     laser.kill()
+                    self.explosion_sound.play()
 
                 # extra collision
                 if pygame.sprite.spritecollide(laser,self.extra,True):
                     self.score += 500
                     laser.kill()
+                    self.explosion_sound.play()
         
         # alien lasers
         if self.alien_lasers:
@@ -123,9 +135,6 @@ class Game:
                 if pygame.sprite.spritecollide(laser,self.player,False):
                     laser.kill()
                     self.lives -= 1
-                    if self.lives <= 0:
-                        pygame.quit()
-                        sys.exit()
         
         # aliens
         if self.aliens:
@@ -135,8 +144,7 @@ class Game:
 
                 # player collision
                 if pygame.sprite.spritecollide(alien,self.player,False):
-                    pygame.quit()
-                    sys.exit()
+                    self.lives = 0
 
     def display_lives(self):
         for live in range(self.lives - 1):
@@ -151,17 +159,32 @@ class Game:
         # Render Text
         screen.blit(score_surf, score_rect)
 
+    def victory_message(self):
+        if not self.aliens.sprites():
+            victory_surf = self.font.render('You won!',False,'white')
+            victory_rect = victory_surf.get_rect(center = (screen_width / 2, screen_height / 2))
+            screen.blit(victory_surf, victory_rect)
+    
+    def gameover_message(self):
+        if self.lives <= 0:
+            self.music.stop()
+            gameover_surf = self.font.render('Game Over!',False,'white','black')
+            gameover_rect = gameover_surf.get_rect(center = (screen_width / 2, screen_height / 2))
+            screen.blit(gameover_surf, gameover_rect)
+
+
     def run(self):
         # update all sprite groups
-        self.player.update()
-        self.alien_lasers.update()
-        self.extra.update()
+        if self.lives > 0:
+            self.player.update()
+            self.alien_lasers.update()
+            self.extra.update()
 
-        # Update additional information
-        self.aliens.update(self.alien_direction)
-        self.alien_position_checker()
-        self.extra_alien_timer()
-        self.collision_checks()
+            # Update additional information
+            self.aliens.update(self.alien_direction)
+            self.alien_position_checker()
+            self.extra_alien_timer()
+            self.collision_checks()
 
         # draw all sprite groups
         self.player.sprite.lasers.draw(screen)
@@ -173,6 +196,8 @@ class Game:
 
         self.display_lives()
         self.display_score()
+        self.victory_message()
+        self.gameover_message()
 
 class CRT:
     def __init__(self):
