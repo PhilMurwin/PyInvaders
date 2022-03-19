@@ -17,6 +17,8 @@ class Game:
         self.lives = 3
         self.live_surface = pygame.image.load('graphics/player.png').convert_alpha()
         self.live_x_start_pos = screen_width - (self.live_surface.get_size()[0] * 2 + 20)
+        self.score = 0
+        self.font = pygame.font.Font('font/Pixeled.ttf',20)
 
         # Obstacle setup
         self.shape = obstacle.shape
@@ -99,11 +101,15 @@ class Game:
                     laser.kill()
                 
                 # alien collisions
-                if pygame.sprite.spritecollide(laser,self.aliens,True):
+                aliens_hit = pygame.sprite.spritecollide(laser,self.aliens,True)
+                if aliens_hit:
+                    for alien in aliens_hit:
+                        self.score += alien.value
                     laser.kill()
 
                 # extra collision
                 if pygame.sprite.spritecollide(laser,self.extra,True):
+                    self.score += 500
                     laser.kill()
         
         # alien lasers
@@ -137,25 +143,36 @@ class Game:
             x = self.live_x_start_pos + (live * (self.live_surface.get_size()[0] + 10))
             screen.blit(self.live_surface,(x,8))
 
+    def display_score(self):
+        # Get Score Surface
+        score_surf = self.font.render(f'score: {self.score}',False,'white')
+        # Get Score Rectangle
+        score_rect = score_surf.get_rect(topleft = (10,-10))
+        # Render Text
+        screen.blit(score_surf, score_rect)
+
     def run(self):
         # update all sprite groups
         self.player.update()
+        self.alien_lasers.update()
+        self.extra.update()
+
+        # Update additional information
         self.aliens.update(self.alien_direction)
         self.alien_position_checker()
-        self.alien_lasers.update()
         self.extra_alien_timer()
-        self.extra.update()
         self.collision_checks()
-        self.display_lives()
 
         # draw all sprite groups
         self.player.sprite.lasers.draw(screen)
         self.player.draw(screen)
-
         self.blocks.draw(screen)
         self.aliens.draw(screen)
         self.alien_lasers.draw(screen)
         self.extra.draw(screen)
+
+        self.display_lives()
+        self.display_score()
     
 if __name__ == '__main__':
     pygame.init()
