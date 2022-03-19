@@ -11,6 +11,7 @@ class Game:
         # update all sprite groups
         self.player.update()
         # draw all sprite groups
+        self.player.sprite.lasers.draw(screen)
         self.player.draw(screen)
     
 if __name__ == '__main__':
